@@ -1,7 +1,0 @@
-default: 03_sysinit_driver
-build_dir: C:/Users/user/Desktop/NRF52/03_sysinit_driver/build_1
-domains:
-  - name: 03_sysinit_driver
-    build_dir: C:/Users/user/Desktop/NRF52/03_sysinit_driver/build_1/03_sysinit_driver
-flash_order:
-  - 03_sysinit_driver
