@@ -1,7 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
-// GPIO Port Configurations
+// LED GPIO Configurations
 static const struct gpio_dt_spec leds[] =
 {
     GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios),
