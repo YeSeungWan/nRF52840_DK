@@ -1,0 +1,54 @@
+/ {
+    aliases {
+        button0 = &button0;
+        button1 = &button1;
+        button2 = &button2;
+        button3 = &button3;
+
+        pwm-led0 = &pwm_led0;
+        pwm-led1 = &pwm_led1;
+        pwm-led2 = &pwm_led2;
+        pwm-led3 = &pwm_led3;
+    };
+
+    pwmleds {
+        compatible = "pwm-leds";
+
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led1: pwm_led_1 {
+			pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led2: pwm_led_2 {
+			pwms = <&pwm0 2 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led3: pwm_led_3 {
+			pwms = <&pwm0 3 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+    };
+
+};
+
+&pwm0 {
+    status = "okay";
+    pinctrl-0 = <&pwm0_default_alt>;
+    pinctrl-1 = <&pwm0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&pinctrl {
+	pwm0_default_alt: pwm0_default_alt {
+		group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 13)>,
+                    <NRF_PSEL(PWM_OUT1, 0, 14)>,
+                    <NRF_PSEL(PWM_OUT2, 0, 15)>,
+                    <NRF_PSEL(PWM_OUT3, 0, 16)>;
+
+			nordic,drive-mode = <3>;
+		};
+	};
+};
