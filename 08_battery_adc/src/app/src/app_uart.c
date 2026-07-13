@@ -6,13 +6,18 @@ LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_INF);
 #include "app_uart.h"
 #include "bsp_uart.h"
 #include "bsp_led.h"
+
 #include "app_watchdog.h"
+#include "app_battery.h"
 
 #define APP_UART_STACK_SIZE             2560
 #define APP_UART_PRIORITY               7
 
 #define PACKET_SOF_BYTE                 0xAA
 #define MAX_PAYLOAD_SIZE                2560
+
+/* Maximum physical LED channels supported by the BSP configuration. */
+#define APP_UART_LED_MAX_NUM                4
 
 /* Constants derived directly from the structure layout */
 #define PACKET_HEADER_SIZE              (offsetof(struct app_uart_packet, cmd))
@@ -27,6 +32,9 @@ LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_INF);
 #define PL_IDX_LED_COUNT                0  /* Payload index representing number of LEDs */
 #define PL_IDX_LED_DATA_START           1  /* Target array block stream start offset */
 #define PL_IDX_INDIVIDUAL_VAL           0  /* Single LED target value offset */
+
+/* Additional trailing byte overhead inside the 0x81 Response Payload. */
+#define PROTOCOL_PAYLOAD_OVERHEAD_NUM       4
 
 /* System Status & Control Commands (0x01 ~ 0x0F) */
 #define CMD_SYS_REQ_STATE               0x01
@@ -119,7 +127,7 @@ static void app_uart_state_tx_res(struct app_uart_context *ctx, uint8_t cmd)
     tx_pkt.sof        = PACKET_SOF_BYTE;
     tx_pkt.device_id  = rx_pkt->device_id;
     tx_pkt.sub_id     = rx_pkt->sub_id;
-    tx_pkt.length     = (uint16_t)(led_num + 1);
+    tx_pkt.length     = (uint16_t)(led_num + PROTOCOL_PAYLOAD_OVERHEAD_NUM);
     tx_pkt.cmd        = (cmd | PROTOCOL_RSP_BITMASK);
 	
 	/* Fill Payload */
@@ -129,6 +137,12 @@ static void app_uart_state_tx_res(struct app_uart_context *ctx, uint8_t cmd)
     {
         tx_pkt.payload[PL_IDX_LED_DATA_START + i] = all_led_states[i];
     }
+
+    uint16_t battery_mv = app_battery_get_mv();
+
+    tx_pkt.payload[led_num + 1] = ((battery_mv >> 8) & 0xFF);
+    tx_pkt.payload[led_num + 2] = (battery_mv & 0xFF);
+    tx_pkt.payload[led_num + 3] = app_battery_get_soc(battery_mv);
 
     /* Calculate Checksum */
     uint8_t checksum = 0;
@@ -194,7 +208,7 @@ static void handle_cmd_sys_ctrl_all(struct app_uart_context *ctx)
     uint8_t max_leds = bsp_get_led_num();
     uint16_t led_num = rx_pkt->payload[PL_IDX_LED_COUNT];
   
-    uint8_t buf[4];
+    uint8_t buf[APP_UART_LED_MAX_NUM];
 
     if (led_num > max_leds)
     {
