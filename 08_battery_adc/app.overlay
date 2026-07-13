@@ -1,0 +1,128 @@
+/ {
+    aliases {
+        button0 = &button0;
+        button1 = &button1;
+        button2 = &button2;
+        button3 = &button3;
+
+        pwm-led0 = &pwm_led0;
+        pwm-led1 = &pwm_led1;
+        pwm-led2 = &pwm_led2;
+        pwm-led3 = &pwm_led3;
+    };
+
+    pwmleds {
+        compatible = "pwm-leds";
+
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led1: pwm_led_1 {
+			pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led2: pwm_led_2 {
+			pwms = <&pwm0 2 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+
+        pwm_led3: pwm_led_3 {
+			pwms = <&pwm0 3 PWM_MSEC(20) PWM_POLARITY_INVERTED>;
+		};
+    };
+
+    /* * Zephyr user node acts as a bridge to expose specific hardware instances
+     * directly to the application layer source code without hardcoding peripheral addresses.
+     */
+    zephyr,user {
+        /* Bind channel index 0 of the ADC controller to the application layer */
+        io-channels = <&adc 0>;
+    };
+};
+
+&pwm0 {
+    status = "okay";
+    pinctrl-0 = <&pwm0_default_alt>;
+    pinctrl-1 = <&pwm0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+&uart0 {
+    status = "okay";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default_alt>;
+    pinctrl-1 = <&uart0_sleep_alt>;
+    pinctrl-names = "default", "sleep";
+};
+
+&pinctrl {
+	pwm0_default_alt: pwm0_default_alt {
+		group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 13)>,
+                    <NRF_PSEL(PWM_OUT1, 0, 14)>,
+                    <NRF_PSEL(PWM_OUT2, 0, 15)>,
+                    <NRF_PSEL(PWM_OUT3, 0, 16)>;
+
+			nordic,drive-mode = <3>;
+		};
+	};
+
+    uart0_default_alt: uart0_default_alt {
+        group1 {
+            psels = <NRF_PSEL(UART_TX, 0, 6)>,
+                    <NRF_PSEL(UART_RX, 0, 8)>;
+        };
+    };
+
+    uart0_sleep_alt: uart0_sleep_alt {
+        group1 {
+            psels = <NRF_PSEL(UART_TX, 0, 6)>,
+                    <NRF_PSEL(UART_RX, 0, 8)>;
+            low-power-enable;
+        };
+    };
+};
+
+/* Configure and enable the SoC internal SAADC peripheral block */
+&adc {
+    status = "okay";          /* Enable power and clock for the SAADC subsystem */
+    #address-cells = <1>;     /* Sub-nodes (channels) use 1 cell for addressing */
+    #size-cells = <0>;        /* Sub-nodes do not require a size property */
+
+    /* Detail configuration for SAADC Channel 0 */
+    channel@0 {
+        reg = <0>;            /* Assign to hardware channel register index 0 */
+
+        /* * Set input attenuation to 1/6.
+         * Since the internal reference is 0.6V, this scales down the measurable input
+         * range up to 3.6V (0.6V * 6 = 3.6V), preventing saturation from a ~3.0V CR2032 cell.
+         */
+        zephyr,gain = "ADC_GAIN_1_6";
+
+        /* Use the internal high-precision 0.6V bandgap reference voltage source */
+        zephyr,reference = "ADC_REF_INTERNAL";
+
+        /* Use the default acquisition time for the S&H (Sample and Hold) capacitor to charge */
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+
+        /* Map the positive analog input to the internal VDD power line (No physical pin required) */
+        zephyr,input-positive = <NRF_SAADC_VDD>;
+
+        /* * Set digital quantization resolution to 12-bit (Produces raw counts from 0 to 4095).
+         * Provides ultra-fine precision of approximately 0.87mV per LSB (3600mV / 4096).
+         */
+        zephyr,resolution = <12>;
+    };
+};
+
+/* If Battery voltage > 3.6V (e.g., Li-ion 4.2V):
+ * You cannot measure it with ADC_GAIN_1_6 alone because the maximum measurable voltage is $3.6\text{V}$.
+ * You must implement an external hardware resistor voltage divider (e.g., $1/2$ scaling) on your custom board,
+   and then multiply the conversion result by 2 in your C code.
+   */
+
+/* Why NRF_SAADC_AIN1?
+ * It maps directly to P0.3 on nRF52840.
+ * If you change your battery monitoring pin to another GPIO in a future custom hardware spin,
+   look up the nRF52840 Product Specification, find the corresponding AINx number, and swap this line (e.g., NRF_SAADC_AIN0 for P0.2).
+ */
