@@ -63,8 +63,6 @@
 - [ ] 배터리 수명 극대화를 위한 저전력 타이머 주기 튜닝 및 메인 FSM 연동 전력 프로파일링
       Optimize low-power system clock/timer intervals and profile total current consumption across main FSM states to maximize CR2032 lifespan.
 
----
-
 ### 🔋 Next Roadmap
 - [ ] **10_firmware_ota:** 가변 패킷 기반 유선 FOTA 다운로드 세션 및 플래시 메모리(MCUBoot) 제어 루틴 구축
 - [ ] **11_ble_connectivity:** BLE NUS(Nordic UART Service) 무선 스택 확장 및 상위 FSM 패킷 파서 결합
