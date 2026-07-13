@@ -27,20 +27,24 @@
 
 ---
 
-## 🧠 2. 프로토콜 핵심 설계 사상 (Key Architecture)
+## 🧠 2. 프로토콜 핵심 설계 사상 (Protocol Design Philosophy)
 
 `100_protocol`에 반영된 통신 패킷 구조는 실무 최적화 사상을 담고 있습니다.
 
 1. **효율적인 서브넷 브로드캐스트 (`0xXF` 와일드카드 마스킹):** 전체 시스템 기기를 다 깨우지 않고, `Device ID`로 특정 기기를 지정한 상태에서 `Sub ID` 내부의 하위 니블 마스킹 규칙을 통해 **단일 장치 내의 특정 조명 채널 그룹만 일괄 제어**할 수 있는 정교한 주소 체계를 구축했습니다.
 2. **데이터 싱크 일원화 (Closed-Loop Sync):** 제어 명령(`0x02`, `0x03`) 성공 시, 드라이버 단의 하드웨어 반영 상태까지 검증하여 **최신 장치 상태 조회 응답(`0x81`) 포맷으로 일괄 동기화 회신**합니다. PC 측 UI 데이터 갱신 오버헤드를 줄이고 통신 신뢰성을 보증합니다.
 3. **가변 페이로드 최적화 (LENGTH 슬라이싱):** 헤더 내 `LENGTH` 필드를 순수 페이로드 바이트 수로 정의하고 리틀 엔디안(Little-Endian) 구조를 엄격히 준수하여, MCU 내부 파서의 포인터 연산 효율을 극대화하고 체크섬 위치 산출 공식을 단순화했습니다.
-4. **하드웨어 직접 참조형 배터리 텔레메트리 (Hardware-Direct Telemetry):** CR2032 배터리의 전원 공급 라인(`Internal VDD Line`)을 전압 분배 회로 없이 `NRF_SAADC_VDD` 아날로그 입력 멀티플렉서(MUX)에 직접 바인딩하여 하드웨어 비용을 최소화했습니다. 소프트웨어 레이어에서는 `CONFIG_NRFX_SAADC=y` 드라이버 인터페이스와 이동 평균 필터(Moving Average Filter)를 결합하여 노이즈를 제거하고 정밀한 SoC(State of Charge) 잔량 매핑 로그를 산출합니다.
+
+---
+
+## 🏗️ 3. 하드웨어 연동 아키텍처 (Hardware Telemetry Architecture)
+1. **하드웨어 직접 참조형 배터리 텔레메트리 (Hardware-Direct Telemetry):** CR2032 배터리의 전원 공급 라인(`Internal VDD Line`)을 전압 분배 회로 없이 `NRF_SAADC_VDD` 아날로그 입력 멀티플렉서(MUX)에 직접 바인딩하여 하드웨어 비용을 최소화했습니다. 소프트웨어 레이어에서는 `CONFIG_NRFX_SAADC=y` 드라이버 인터페이스와 이동 평균 필터(Moving Average Filter)를 결합하여 노이즈를 제거하고 정밀한 SoC(State of Charge) 잔량 매핑 로그를 산출합니다.
 
 <img width="821" height="416" alt="battery_telemetry" src="https://github.com/user-attachments/assets/0258f958-a5aa-45a2-9ba1-c689bf39fc9b" />
 
 ---
 
-## 📅 3. 통합 개발 마일스톤 & 로드맵 (Milestones)
+## 📅 4. 통합 개발 마일스톤 & 로드맵 (Milestones)
 
 ### ✅ Done (지금까지 완료한 것)
 - [x] **01 ~ 04 단계:** Zephyr RTOS 커널 부팅, 시스템 초기화 및 인터럽트 기반 하드웨어 입출력 인프라 검증 완료
