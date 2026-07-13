@@ -43,16 +43,21 @@
 - [x] **01 ~ 04 단계:** Zephyr RTOS 커널 부팅, 시스템 초기화 및 인터럽트 기반 하드웨어 입출력 인프라 검증 완료
 - [x] **05 단계:** 내부 하드웨어 타이머 제어를 통한 PWM 기반 LED 디밍 내장 제어 로직 구현 완료
 - [x] **06 단계:** UART 비동기 드라이버, Zephyr 메시지 큐(k_msgq), 가변 패킷 파서(FSM) 통합 구현 완료
+- [x] **07 단계:** 하드웨어 워치독(WDG) 드라이버 구현 및 시스템 데드락(Lock-up) 방지 인프라 구축
 - [x] **100_protocol:** `Device ID`/`Sub ID` 마스킹 사상을 반영한 가변 패킷 기술 규격서 아카이브 완료
 
-### 🚀 In Progress (07번 단계: 하드웨어 워치독 인프라 구축 - Current Stage)
-* 관련 폴더: `/07_watchdog_wdg`
-- [ ] nRF52840 내장 Watchdog Peripheral 드라이버 초기화 및 Zephyr WDG API 바인딩
-- [ ] 메인 스레드 런타임 주기 검증용 하드웨어 타임아웃(예: 2000ms) 및 가드 루틴 설계
-- [ ] 시스템 정상 동작 상태를 보증하는 주기적 Watchdog Feed(Kick) 매커니즘 구현 및 예외 처리 테스트
+### 🚀 In Progress (08번 단계: 배터리 전압 정밀 측정 및 필터 적용 - Current Stage)
+* 관련 폴더: `/08_battery_adc`
+- [ ] nRF52840 내장 SAADC 하드웨어를 디바이스 트리에 바인딩하고 리프레시 주기 레이아웃 설계
+      (Bind nRF52840 internal SAADC peripheral to devicetree and design refresh interval layout)
+- [ ] CR2032 코인 배터리 전압 분배 회로 비(Ratio) 및 내부 Gain을 반영한 정확한 mV 수식 계산 공식 구현
+      (Implement accurate mV conversion formula accounting for CR2032 voltage divider ratio and internal SAADC gain)
+- [ ] LED 구동 시 발생하는 순간 전압 강하(Voltage Dip) 현상 보정을 위한 소프트웨어 이동 평균 필터 탑재
+      (Integrate a software moving average filter to compensate for momentary voltage dips caused by LED operations)
+
+---
 
 ### 🔋 Next Roadmap
-- [ ] **08_battery_adc:** 내장 SAADC 하드웨어 기반 배터리 전압 정밀 측정 및 소프트웨어 필터 알고리즘 적용
 - [ ] **09_low_power_pm:** Zephyr PM 인프라 기반 CR2032 코인 배터리 최적화 초저전력 파워 관리 스택 구현
 - [ ] **10_firmware_ota:** 가변 패킷 기반 유선 FOTA 다운로드 세션 및 플래시 메모리(MCUBoot) 제어 루틴 구축
 - [ ] **11_ble_connectivity:** BLE NUS(Nordic UART Service) 무선 스택 확장 및 상위 FSM 패킷 파서 결합
