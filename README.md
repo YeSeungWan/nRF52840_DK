@@ -17,7 +17,7 @@
 * **`06_uart_msgq/`**: Step 6. UART 비동기 드라이버, Zephyr 메시지 큐(k_msgq), 가변 패킷 파서(FSM) 통합 구현
 * **`07_watchdog_wdg/`**: Step 7. 하드웨어 워치독(WDG) 드라이버 구현 및 시스템 데드락(Lock-up) 방지 인프라 구축
 * **`08_battery_adc/`**: Step 8. 내장 SAADC 하드웨어 기반 배터리 전압 정밀 측정 및 소프트웨어 필터 알고리즘 적용
-* **`09_low_power_pm/`**: Step 9. Zephyr PM 인프라 기반 CR2032 코인 배터리 최적화 초저전력 파워 관리 스택 구현
+* **`09_low_power_pm/`**: Step 9. Zephyr PM 인프라 기반 CR2032 코인 배터리 최적화 저전력 파워 관리 스택 구현
 * **`10_firmware_ota/`**: Step 10. 가변 패킷 기반 유선 FOTA 다운로드 세션 및 플래시 메모리(MCUBoot) 제어 루틴 구축
 * **`11_ble_connectivity/`**: Step 11. BLE NUS(Nordic UART Service) 무선 스택 확장 및 상위 FSM 패킷 파서 결합
 * **`12_nfc_pairing/`**: Step 12. Wake-on-NFC 기반 초저전력 BLE 페어링 및 상용화 사용자 경험(UX) 최적화
@@ -34,6 +34,9 @@
 1. **효율적인 서브넷 브로드캐스트 (`0xXF` 와일드카드 마스킹):** 전체 시스템 기기를 다 깨우지 않고, `Device ID`로 특정 기기를 지정한 상태에서 `Sub ID` 내부의 하위 니블 마스킹 규칙을 통해 **단일 장치 내의 특정 조명 채널 그룹만 일괄 제어**할 수 있는 정교한 주소 체계를 구축했습니다.
 2. **데이터 싱크 일원화 (Closed-Loop Sync):** 제어 명령(`0x02`, `0x03`) 성공 시, 드라이버 단의 하드웨어 반영 상태까지 검증하여 **최신 장치 상태 조회 응답(`0x81`) 포맷으로 일괄 동기화 회신**합니다. PC 측 UI 데이터 갱신 오버헤드를 줄이고 통신 신뢰성을 보증합니다.
 3. **가변 페이로드 최적화 (LENGTH 슬라이싱):** 헤더 내 `LENGTH` 필드를 순수 페이로드 바이트 수로 정의하고 리틀 엔디안(Little-Endian) 구조를 엄격히 준수하여, MCU 내부 파서의 포인터 연산 효율을 극대화하고 체크섬 위치 산출 공식을 단순화했습니다.
+4. **하드웨어 직접 참조형 배터리 텔레메트리 (Hardware-Direct Telemetry):** CR2032 배터리의 전원 공급 라인(`Internal VDD Line`)을 전압 분배 회로 없이 `NRF_SAADC_VDD` 아날로그 입력 멀티플렉서(MUX)에 직접 바인딩하여 하드웨어 비용을 최소화했습니다. 소프트웨어 레이어에서는 `CONFIG_NRFX_SAADC=y` 드라이버 인터페이스와 이동 평균 필터(Moving Average Filter)를 결합하여 노이즈를 제거하고 정밀한 SoC(State of Charge) 잔량 매핑 로그를 산출합니다.
+
+<img width="821" height="416" alt="battery_telemetry" src="https://github.com/user-attachments/assets/0258f958-a5aa-45a2-9ba1-c689bf39fc9b" />
 
 ---
 
@@ -44,21 +47,21 @@
 - [x] **05 단계:** 내부 하드웨어 타이머 제어를 통한 PWM 기반 LED 디밍 내장 제어 로직 구현 완료
 - [x] **06 단계:** UART 비동기 드라이버, Zephyr 메시지 큐(k_msgq), 가변 패킷 파서(FSM) 통합 구현 완료
 - [x] **07 단계:** 하드웨어 워치독(WDG) 드라이버 구현 및 시스템 데드락(Lock-up) 방지 인프라 구축
+- [x] **08 단계:** 내장 SAADC 하드웨어 기반 배터리 전압 정밀 측정 및 소프트웨어 필터 알고리즘 적용
 - [x] **100_protocol:** `Device ID`/`Sub ID` 마스킹 사상을 반영한 가변 패킷 기술 규격서 아카이브 완료
 
-### 🚀 In Progress (08번 단계: 배터리 전압 정밀 측정 및 필터 적용 - Current Stage)
-* 관련 폴더: `/08_battery_adc`
-- [ ] nRF52840 내장 SAADC 하드웨어를 디바이스 트리에 바인딩하고 리프레시 주기 레이아웃 설계
-      (Bind nRF52840 internal SAADC peripheral to devicetree and design refresh interval layout)
-- [ ] CR2032 코인 배터리 전압 분배 회로 비(Ratio) 및 내부 Gain을 반영한 정확한 mV 수식 계산 공식 구현
-      (Implement accurate mV conversion formula accounting for CR2032 voltage divider ratio and internal SAADC gain)
-- [ ] LED 구동 시 발생하는 순간 전압 강하(Voltage Dip) 현상 보정을 위한 소프트웨어 이동 평균 필터 탑재
-      (Integrate a software moving average filter to compensate for momentary voltage dips caused by LED operations)
+### 🚀 In Progress (09번 단계: 저전력 파워 관리 스택 구현 - Current Stage)
+* 관련 폴더: `/09_low_power_pm`
+- [ ] Zephyr PM(Power Management) 서브시스템 활성화 및 System Idle 상태 진입 검증
+      Implement Zephyr PM subsystem infrastructure and verify System Idle/System Standby state transitions during inactivity.
+- [ ] [ ] UART 및 SAADC 등 주변장치(Peripheral) 동적 전원 관리 및 서스펜드/이력 제어
+      Configure dynamic device power management (Device PM) to suspend and resume high-current blocks like UART and SAADC.
+- [ ] 배터리 수명 극대화를 위한 저전력 타이머 주기 튜닝 및 메인 FSM 연동 전력 프로파일링
+      Optimize low-power system clock/timer intervals and profile total current consumption across main FSM states to maximize CR2032 lifespan.
 
 ---
 
 ### 🔋 Next Roadmap
-- [ ] **09_low_power_pm:** Zephyr PM 인프라 기반 CR2032 코인 배터리 최적화 초저전력 파워 관리 스택 구현
 - [ ] **10_firmware_ota:** 가변 패킷 기반 유선 FOTA 다운로드 세션 및 플래시 메모리(MCUBoot) 제어 루틴 구축
 - [ ] **11_ble_connectivity:** BLE NUS(Nordic UART Service) 무선 스택 확장 및 상위 FSM 패킷 파서 결합
 - [ ] **12_nfc_pairing:** Wake-on-NFC 기반 초저전력 BLE 페어링 및 상용화 사용자 경험(UX) 최적화
